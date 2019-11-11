@@ -36,7 +36,19 @@ NeedToKnowLoader = {}
 -- -------------
 -- ADDON MEMBERS
 -- -------------
+local g_isClassic = false;
+if not g_isClassic then
+	local wowversion, wowbuild, wowdate, wowtocversion = GetBuildInfo();
+	g_isClassic = (wowtocversion == 11302);
+end
+
 local g_GetActiveTalentGroup = _G.GetSpecialization
+local function g_GetActiveTalentGroupSub()
+	return 0;
+end
+if not g_GetActiveTalentGroup then
+	g_GetActiveTalentGroup = g_GetActiveTalentGroupSub;
+end
 local g_UnitAffectingCombat = UnitAffectingCombat
 local g_UnitIsFriend = UnitIsFriend
 local g_UnitGUID = UnitGUID
@@ -346,6 +358,13 @@ NEEDTOKNOW.LENGTHENINGS= {
     if not NeedToKnow.LSM:Fetch("statusbar", "Smooth v2", true) then NeedToKnow.LSM:Register("statusbar", "Smooth v2",          [[Interface\Addons\NeedToKnow\Textures\Smoothv2.tga]]) end
     if not NeedToKnow.LSM:Fetch("statusbar", "Striped", true) then NeedToKnow.LSM:Register("statusbar", "Striped",            [[Interface\Addons\NeedToKnow\Textures\Striped.tga]]) end
 
+-- -------------------
+-- ClassicDurations Support
+-- -------------------
+
+	local LCD = LibStub("LibClassicDurations")
+    LCD:Register("NeedToKnow") -- tell library it's being used and should start working
+
 -- ---------------
 -- EXECUTIVE FRAME
 -- ---------------
@@ -518,8 +537,10 @@ function NeedToKnow.ExecutiveFrame_PLAYER_LOGIN()
 
     -- NeedToKnowLoader.SetPowerTypeList(player_CLASS)
 
-    NeedToKnow_ExecutiveFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
-    NeedToKnow_ExecutiveFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+    if not g_isClassic then
+		NeedToKnow_ExecutiveFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
+		NeedToKnow_ExecutiveFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+    end
     NeedToKnow_ExecutiveFrame:RegisterEvent("UNIT_TARGET")
     NeedToKnow_ExecutiveFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
     NeedToKnow_ExecutiveFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -1765,7 +1786,9 @@ function NeedToKnow.ClearScripts(bar)
     bar:SetScript("OnEvent", nil)
     bar:SetScript("OnUpdate", nil)
     bar:UnregisterEvent("PLAYER_TARGET_CHANGED")
-    bar:UnregisterEvent("PLAYER_FOCUS_CHANGED")
+	if not g_isClassic then
+		bar:UnregisterEvent("PLAYER_FOCUS_CHANGED");
+	end
     bar:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     bar:UnregisterEvent("PLAYER_TOTEM_UPDATE")
     bar:UnregisterEvent("UNIT_AURA")
@@ -2619,31 +2642,57 @@ mfn_AuraCheck_BUFFCD = function (bar, bar_entry, all_stacks)
 end
 
 local function UnitAuraWrapper(a,b,c,d)
-     local
-        name,  
-        -- _, -- rank,  
-        icon,
-        count,  
-        _, -- type,
-        dur,
-        expiry,
-        caster,
-        _, -- uao.steal,
-        _, -- uao.cons -- Should consolidate
-        id,
-        _, -- uao.canCast -- The player's class/spec can cast this spell
-        _, -- A boss applied this
-        _, -- cast by any player
-		_, -- nameplate show all
-		_, -- time mod
-        v1,
-        v2,
-        v3
-    = UnitAura(a,b,c,d)
-
-    if name then
-        return name, icon, count, dur, expiry, caster, id, v1, v2, v3
-    end
+	if g_isClassic then
+		local
+			name,  
+			-- _, -- rank,  
+			icon,
+			count,  
+			_, -- type,
+			dur,
+			expiry,
+			caster,
+			_, -- uao.steal,
+			_, -- uao.cons -- Should consolidate
+			id,
+			_, -- uao.canCast -- The player's class/spec can cast this spell
+			_, -- A boss applied this
+			_, -- cast by any player
+			_, -- nameplate show all
+			_, -- time mod
+			v1,
+			v2,
+			v3
+		= LCD:UnitAura(a,b,c,d);
+		if name then
+			return name, icon, count, dur, expiry, nil, id, v1, v2, v3
+		end
+	else
+		local
+			name,  
+			-- _, -- rank,  
+			icon,
+			count,  
+			_, -- type,
+			dur,
+			expiry,
+			caster,
+			_, -- uao.steal,
+			_, -- uao.cons -- Should consolidate
+			id,
+			_, -- uao.canCast -- The player's class/spec can cast this spell
+			_, -- A boss applied this
+			_, -- cast by any player
+			_, -- nameplate show all
+			_, -- time mod
+			v1,
+			v2,
+			v3
+		= UnitAura(a,b,c,d)
+		if name then
+			return name, icon, count, dur, expiry, caster, id, v1, v2, v3
+		end
+	end
 end
 
 -- Bar_AuraCheck helper that looks for the first instance of a buff
