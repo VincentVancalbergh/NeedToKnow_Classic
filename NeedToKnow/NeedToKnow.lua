@@ -36,10 +36,10 @@ NeedToKnowLoader = {}
 -- -------------
 -- ADDON MEMBERS
 -- -------------
-local g_isClassic = true;
+local g_isClassic = false;
 if not g_isClassic then
 	local wowversion, wowbuild, wowdate, wowtocversion = GetBuildInfo();
-	g_isClassic = (wowtocversion == 11302);
+	g_isClassic = (wowtocversion >= 11300 && wowtocversion < 11400);
 end
 
 local g_GetActiveTalentGroup = _G.GetSpecialization
