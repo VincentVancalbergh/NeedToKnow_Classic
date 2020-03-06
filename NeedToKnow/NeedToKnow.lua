@@ -36,7 +36,7 @@ NeedToKnowLoader = {}
 -- -------------
 -- ADDON MEMBERS
 -- -------------
-local g_isClassic = false;
+local g_isClassic = true;
 if not g_isClassic then
 	local wowversion, wowbuild, wowdate, wowtocversion = GetBuildInfo();
 	g_isClassic = (wowtocversion == 11302);
